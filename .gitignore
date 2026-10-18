@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Local SQLite database
+lost_and_found.db
+
+# OS / editor
+.DS_Store
+.vscode/
