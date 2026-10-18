@@ -4,4 +4,14 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]",
+    "sqlalchemy>=2.0.55",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

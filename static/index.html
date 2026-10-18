@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Lost &amp; Found</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+  <header class="bg-indigo-700 text-white">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold">Campus Lost &amp; Found</h1>
+      <div id="nav-user" class="hidden text-sm flex items-center gap-3">
+        <span id="nav-user-name"></span>
+        <button id="logout-btn" class="bg-white/20 hover:bg-white/30 rounded px-3 py-1">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-4 py-10">
+    <!-- Message banner for success / error feedback -->
+    <div id="message" class="hidden mb-4 rounded px-4 py-3 text-sm"></div>
+
+    <!-- Shown when nobody is logged in -->
+    <section id="auth-section" class="bg-white rounded-lg shadow">
+      <div class="flex border-b">
+        <button data-tab="login" class="tab flex-1 py-3 font-semibold">Log in</button>
+        <button data-tab="register" class="tab flex-1 py-3 font-semibold">Register</button>
+      </div>
+
+      <form id="login-form" class="p-6 space-y-4">
+        <p class="text-sm text-slate-500">Enter the details you registered with.</p>
+        <label class="block">
+          <span class="text-sm font-medium">Name</span>
+          <input name="name" required class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Email</span>
+          <input name="email" type="email" required class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Phone</span>
+          <input name="phone" type="tel" required placeholder="806-555-0101" class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded py-2">Log in</button>
+      </form>
+
+      <form id="register-form" class="p-6 space-y-4 hidden">
+        <label class="block">
+          <span class="text-sm font-medium">Name</span>
+          <input name="name" required class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Email</span>
+          <input name="email" type="email" required class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Phone</span>
+          <input name="phone" type="tel" required placeholder="806-555-0101" class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Role</span>
+          <select name="role" class="mt-1 w-full rounded border-slate-300 border px-3 py-2 bg-white">
+            <option value="student">Student</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+        <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded py-2">Create account</button>
+      </form>
+    </section>
+
+    <!-- Shown after a successful login -->
+    <section id="profile-section" class="hidden bg-white rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">Welcome, <span id="profile-name"></span>!</h2>
+      <dl class="grid grid-cols-3 gap-y-2 text-sm">
+        <dt class="font-medium text-slate-500">Email</dt><dd id="profile-email" class="col-span-2"></dd>
+        <dt class="font-medium text-slate-500">Phone</dt><dd id="profile-phone" class="col-span-2"></dd>
+        <dt class="font-medium text-slate-500">Role</dt><dd id="profile-role" class="col-span-2 capitalize"></dd>
+      </dl>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
