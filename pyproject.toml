@@ -3,5 +3,5 @@ name = "lostandfoundapp"
 version = "0.1.0"
 requires-python = ">=3.9"
 dependencies = [
-    "fastapp[standard]>=0.1.7",
+    "fastapi[standard]",
 ]
