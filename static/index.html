@@ -17,12 +17,12 @@
     </div>
   </header>
 
-  <main class="max-w-md mx-auto px-4 py-10">
+  <main class="max-w-3xl mx-auto px-4 py-10">
     <!-- Message banner for success / error feedback -->
-    <div id="message" class="hidden mb-4 rounded px-4 py-3 text-sm"></div>
+    <div id="message" class="hidden"></div>
 
     <!-- Shown when nobody is logged in -->
-    <section id="auth-section" class="bg-white rounded-lg shadow">
+    <section id="auth-section" class="max-w-md mx-auto bg-white rounded-lg shadow">
       <div class="flex border-b">
         <button data-tab="login" class="tab flex-1 py-3 font-semibold">Log in</button>
         <button data-tab="register" class="tab flex-1 py-3 font-semibold">Register</button>
@@ -70,7 +70,7 @@
     </section>
 
     <!-- Shown after a successful login -->
-    <section id="profile-section" class="hidden bg-white rounded-lg shadow p-6">
+    <section id="profile-section" class="hidden bg-white rounded-lg shadow p-6 mb-6">
       <h2 class="text-lg font-semibold mb-4">Welcome, <span id="profile-name"></span>!</h2>
       <dl class="grid grid-cols-3 gap-y-2 text-sm">
         <dt class="font-medium text-slate-500">Email</dt><dd id="profile-email" class="col-span-2"></dd>
@@ -78,8 +78,55 @@
         <dt class="font-medium text-slate-500">Role</dt><dd id="profile-role" class="col-span-2 capitalize"></dd>
       </dl>
     </section>
+
+    <!-- Report / edit an item (students only) -->
+    <section id="item-form-section" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+      <h2 id="item-form-title" class="text-lg font-semibold mb-4">Report an item</h2>
+      <form id="item-form" class="space-y-4">
+        <input type="hidden" name="id">
+        <div class="flex gap-6">
+          <label class="flex items-center gap-2">
+            <input type="radio" name="item_type" value="lost" checked> I lost something
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="item_type" value="found"> I found something
+          </label>
+        </div>
+        <label class="block">
+          <span class="text-sm font-medium">Title</span>
+          <input name="title" required maxlength="100" placeholder="Blue backpack" class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Description</span>
+          <textarea name="description" required maxlength="2000" rows="3" placeholder="Color, brand, distinguishing marks..." class="mt-1 w-full rounded border-slate-300 border px-3 py-2"></textarea>
+        </label>
+        <label class="block">
+          <span class="text-sm font-medium">Campus location</span>
+          <input name="location" required maxlength="100" list="campus-locations" placeholder="Where was it lost or found?" class="mt-1 w-full rounded border-slate-300 border px-3 py-2">
+          <datalist id="campus-locations">
+            <option value="Library">
+            <option value="Student Center">
+            <option value="Recreation Center">
+            <option value="Dining Hall">
+            <option value="Residence Hall">
+            <option value="Parking Lot">
+          </datalist>
+        </label>
+        <div class="flex gap-3">
+          <button id="item-submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded px-4 py-2">Post item</button>
+          <button type="button" id="item-cancel-btn" class="hidden bg-slate-200 hover:bg-slate-300 rounded px-4 py-2">Cancel edit</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- All item posts -->
+    <section id="items-section" class="hidden">
+      <h2 class="text-lg font-semibold mb-3">Recent posts</h2>
+      <div id="items-list" class="space-y-3"></div>
+    </section>
   </main>
 
   <script src="/static/app.js"></script>
+  <script src="/static/items.js"></script>
 </body>
 </html>

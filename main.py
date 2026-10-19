@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import Base, engine
-from routers import users
+from routers import items, users
 
 
 @asynccontextmanager
@@ -18,6 +18,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Campus Lost & Found", lifespan=lifespan)
 
 app.include_router(users.router)
+app.include_router(items.router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

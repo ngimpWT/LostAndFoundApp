@@ -26,11 +26,21 @@ function errorText(body) {
   return body.detail || "Something went wrong";
 }
 
-async function postJSON(url, data) {
+function getCurrentUser() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY));
+}
+
+// Send a request to the API. The logged-in user's id goes in the X-User-Id
+// header so the backend knows who is making the request.
+async function api(method, url, data) {
+  const headers = { "Content-Type": "application/json" };
+  const user = getCurrentUser();
+  if (user) headers["X-User-Id"] = user.id;
+
   const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    method,
+    headers,
+    body: data === undefined ? undefined : JSON.stringify(data),
   });
   const body = await response.json();
   if (!response.ok) throw new Error(errorText(body));
@@ -58,10 +68,17 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
+// Escape user-provided text before putting it inside HTML.
+function escapeHTML(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // ---------- Session display ----------
 
 function render() {
-  const user = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const user = getCurrentUser();
   document.getElementById("auth-section").classList.toggle("hidden", !!user);
   document.getElementById("profile-section").classList.toggle("hidden", !user);
   document.getElementById("nav-user").classList.toggle("hidden", !user);
@@ -73,6 +90,9 @@ function render() {
     document.getElementById("profile-phone").textContent = user.phone;
     document.getElementById("profile-role").textContent = user.role;
   }
+
+  // Defined in items.js
+  renderItemsSection(user);
 }
 
 // ---------- Form handlers ----------
@@ -81,7 +101,7 @@ registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(registerForm));
   try {
-    await postJSON("/users", data);
+    await api("POST", "/users", data);
     registerForm.reset();
     showTab("login");
     showMessage("Account created! You can now log in.");
@@ -94,7 +114,7 @@ loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(loginForm));
   try {
-    const user = await postJSON("/users/login", data);
+    const user = await api("POST", "/users/login", data);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     loginForm.reset();
     hideMessage();
@@ -112,4 +132,4 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 });
 
 showTab("login");
-render();
+// The first render() runs at the bottom of items.js, once its functions exist.

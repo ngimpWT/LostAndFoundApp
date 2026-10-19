@@ -57,3 +57,52 @@ class UserOut(BaseModel):
     phone: str
     role: str
     created_at: datetime
+
+
+def clean_text(value: str, field: str, max_length: int) -> str:
+    """Trim whitespace and make sure a required text field isn't blank or too long."""
+    value = value.strip()
+    if not value:
+        raise ValueError(f"{field} must not be blank")
+    if len(value) > max_length:
+        raise ValueError(f"{field} must be at most {max_length} characters")
+    return value
+
+
+class ItemIn(BaseModel):
+    """Fields a student provides when creating or editing a post (FR-2)."""
+
+    title: str
+    description: str
+    item_type: Literal["lost", "found"]
+    location: str
+
+    @field_validator("title")
+    @classmethod
+    def title_valid(cls, value: str) -> str:
+        return clean_text(value, "title", 100)
+
+    @field_validator("description")
+    @classmethod
+    def description_valid(cls, value: str) -> str:
+        return clean_text(value, "description", 2000)
+
+    @field_validator("location")
+    @classmethod
+    def location_valid(cls, value: str) -> str:
+        return clean_text(value, "location", 100)
+
+
+class ItemOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    description: str
+    item_type: str
+    location: str
+    is_resolved: bool
+    owner_id: int
+    owner_name: str
+    created_at: datetime
+    updated_at: datetime
