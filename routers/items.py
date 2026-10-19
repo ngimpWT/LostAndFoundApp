@@ -1,5 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 import models
@@ -65,7 +67,56 @@ def list_items(db: Session = Depends(get_db)):
     return db.scalars(query).all()
 
 
-# Declared before "/{item_id}" so "mine" isn't mistaken for an item id.
+# The routes below are declared before "/{item_id}" so words like "search"
+# and "mine" aren't mistaken for an item id.
+
+
+def keyword_matches(word: str):
+    """A condition that is true when the word appears anywhere in a post.
+
+    icontains() is a case-insensitive "LIKE %word%". autoescape=True makes
+    characters like % and _ match literally instead of acting as wildcards.
+    """
+    return or_(
+        models.Item.title.icontains(word, autoescape=True),
+        models.Item.description.icontains(word, autoescape=True),
+        models.Item.location.icontains(word, autoescape=True),
+        models.Item.photos.any(models.Photo.caption.icontains(word, autoescape=True)),
+    )
+
+
+@router.get("/search", response_model=list[schemas.ItemOut])
+def search_items(
+    params: Annotated[schemas.ItemSearch, Query()],
+    db: Session = Depends(get_db),
+):
+    """Search approved posts by keyword, item type, and campus location (FR-5)."""
+    query = select(models.Item).where(models.Item.status == "approved")
+
+    for word in params.q.split():
+        query = query.where(keyword_matches(word))
+    if params.item_type:
+        query = query.where(models.Item.item_type == params.item_type)
+    if params.location:
+        query = query.where(models.Item.location.icontains(params.location, autoescape=True))
+    if not params.include_resolved:
+        query = query.where(models.Item.is_resolved.is_(False))
+
+    return db.scalars(query.order_by(*NEWEST_FIRST)).all()
+
+
+@router.get("/locations", response_model=list[str])
+def list_locations(db: Session = Depends(get_db)):
+    """Every campus location used by an approved post, for the search filter dropdown."""
+    query = (
+        select(models.Item.location)
+        .where(models.Item.status == "approved")
+        .distinct()
+        .order_by(models.Item.location)
+    )
+    return db.scalars(query).all()
+
+
 @router.get("/mine", response_model=list[schemas.ItemOut])
 def list_my_items(
     user: models.User = Depends(get_current_user),

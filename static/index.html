@@ -132,9 +132,33 @@
       <div id="my-items-list" class="space-y-3"></div>
     </section>
 
-    <!-- Public feed: approved posts only -->
+    <!-- Public feed: approved posts only, with search and filters -->
     <section id="items-section" class="hidden">
-      <h2 class="text-lg font-semibold mb-3">Campus feed</h2>
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="text-lg font-semibold">Campus feed</h2>
+        <span id="result-count" class="text-sm text-slate-500"></span>
+      </div>
+
+      <form id="search-form" role="search" class="bg-white rounded-lg shadow p-4 mb-4 space-y-3">
+        <input name="q" type="search" maxlength="100" autocomplete="off"
+               placeholder="Search keywords, e.g. blue backpack"
+               class="w-full rounded border-slate-300 border px-3 py-2">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
+          <select name="item_type" class="rounded border-slate-300 border px-2 py-1 bg-white">
+            <option value="">Lost &amp; found</option>
+            <option value="lost">Lost only</option>
+            <option value="found">Found only</option>
+          </select>
+          <select name="location" class="rounded border-slate-300 border px-2 py-1 bg-white">
+            <option value="">All locations</option>
+          </select>
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="include_resolved"> Show resolved
+          </label>
+          <button type="button" id="clear-search-btn" class="ml-auto text-indigo-700 hover:underline">Clear</button>
+        </div>
+      </form>
+
       <div id="items-list" class="space-y-3"></div>
     </section>
   </main>
@@ -142,6 +166,7 @@
   <script src="/static/app.js"></script>
   <script src="/static/photos.js"></script>
   <script src="/static/moderation.js"></script>
+  <script src="/static/search.js"></script>
   <script src="/static/items.js"></script>
 </body>
 </html>

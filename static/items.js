@@ -1,7 +1,7 @@
 // Item posts: report, edit, and mark resolved (FR-2).
 // Uses api(), getCurrentUser(), showMessage(), and escapeHTML() from app.js,
-// photoGallery() and loadPhotoImages() from photos.js, and reviewList,
-// reviewForm(), and takeDownItem() from moderation.js.
+// photoGallery() and loadPhotoImages() from photos.js, reviewList, reviewForm(),
+// and takeDownItem() from moderation.js, and loadFeed() / loadLocations() from search.js.
 
 const itemForm = document.getElementById("item-form");
 const itemsList = document.getElementById("items-list");
@@ -23,7 +23,7 @@ function renderItemsSection(user) {
 async function loadItems() {
   const user = getCurrentUser();
   try {
-    renderList(itemsList, await api("GET", "/items"), { feed: true }, "No approved posts yet.");
+    await Promise.all([loadFeed(), loadLocations()]);
 
     if (user.role === "student") {
       const mine = await api("GET", "/items/mine");

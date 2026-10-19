@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 class UserCredentials(BaseModel):
@@ -101,6 +101,20 @@ class PhotoOut(BaseModel):
     caption: str
     url: str
     created_at: datetime
+
+
+class ItemSearch(BaseModel):
+    """Query parameters for GET /items/search (FR-5). Every filter is optional."""
+
+    q: str = Field("", max_length=100, description="Keywords; every word must match")
+    item_type: Literal["lost", "found"] | None = None
+    location: str = Field("", max_length=100, description="Partial campus location")
+    include_resolved: bool = False
+
+    @field_validator("q", "location")
+    @classmethod
+    def trimmed(cls, value: str) -> str:
+        return value.strip()
 
 
 class ItemOut(BaseModel):

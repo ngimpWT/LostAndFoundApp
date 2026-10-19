@@ -29,12 +29,13 @@ class Item(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(Text)
-    item_type: Mapped[str] = mapped_column(String(10))  # "lost" or "found"
-    location: Mapped[str] = mapped_column(String(100))  # campus location
+    # Columns used by search filters are indexed so lookups stay fast.
+    item_type: Mapped[str] = mapped_column(String(10), index=True)  # "lost" or "found"
+    location: Mapped[str] = mapped_column(String(100), index=True)  # campus location
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
     # Moderation status: "pending" until an admin reviews it, then "approved" or "rejected".
     # Only approved posts appear in the public feed.
-    status: Mapped[str] = mapped_column(String(10), default="pending")
+    status: Mapped[str] = mapped_column(String(10), default="pending", index=True)
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
