@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from database import Base, engine
+from database import Base, engine, find_missing_columns
 from routers import items, moderation, photos, users
 
 
@@ -12,6 +12,13 @@ from routers import items, moderation, photos, users
 async def lifespan(app: FastAPI):
     # Create the SQLite tables on startup if they don't exist yet.
     Base.metadata.create_all(bind=engine)
+
+    missing = find_missing_columns(engine)
+    if missing:
+        raise RuntimeError(
+            f"The database file is out of date (missing: {', '.join(missing)}). "
+            "Stop the server, delete lost_and_found.db, and start it again."
+        )
     yield
 
 
