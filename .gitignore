@@ -13,3 +13,6 @@ uploads/
 # OS / editor
 .DS_Store
 .vscode/
+
+# Personal Claude Code settings
+.claude/settings.local.json
