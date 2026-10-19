@@ -5,7 +5,7 @@ __pycache__/
 .pytest_cache/
 
 # Local SQLite database
-lost_and_found.db
+lost_and_found.db*
 
 # Uploaded photos
 uploads/
