@@ -119,15 +119,29 @@
       </form>
     </section>
 
-    <!-- All item posts -->
+    <!-- Admin review queue -->
+    <section id="review-section" class="hidden mb-8">
+      <h2 class="text-lg font-semibold mb-1">Review queue</h2>
+      <p class="text-sm text-slate-500 mb-3">Posts stay hidden from the campus feed until you approve them.</p>
+      <div id="review-list" class="space-y-3"></div>
+    </section>
+
+    <!-- The current student's own posts, with their review status -->
+    <section id="my-items-section" class="hidden mb-8">
+      <h2 class="text-lg font-semibold mb-3">My posts</h2>
+      <div id="my-items-list" class="space-y-3"></div>
+    </section>
+
+    <!-- Public feed: approved posts only -->
     <section id="items-section" class="hidden">
-      <h2 class="text-lg font-semibold mb-3">Recent posts</h2>
+      <h2 class="text-lg font-semibold mb-3">Campus feed</h2>
       <div id="items-list" class="space-y-3"></div>
     </section>
   </main>
 
   <script src="/static/app.js"></script>
   <script src="/static/photos.js"></script>
+  <script src="/static/moderation.js"></script>
   <script src="/static/items.js"></script>
 </body>
 </html>

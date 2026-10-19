@@ -53,7 +53,7 @@ def test_uploaded_photo_is_saved_and_served(client, student, item_id, upload_dir
     photo = upload(client, item_id, student).json()
     assert len(list(upload_dir.iterdir())) == 1
 
-    response = client.get(photo["url"])
+    response = client.get(photo["url"], headers=student)
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/png"
     assert response.content == PNG_BYTES
@@ -68,20 +68,20 @@ def test_upload_jpeg(client, student, item_id):
 def test_item_includes_its_photos(client, student, item_id):
     upload(client, item_id, student, caption="Front view")
     upload(client, item_id, student, caption="Keychain close-up")
-    item = client.get(f"/items/{item_id}").json()
+    item = client.get(f"/items/{item_id}", headers=student).json()
     assert [p["caption"] for p in item["photos"]] == ["Front view", "Keychain close-up"]
 
 
 def test_list_photos_for_item(client, student, item_id):
     upload(client, item_id, student, caption="One")
     upload(client, item_id, student, caption="Two")
-    response = client.get(f"/items/{item_id}/photos")
+    response = client.get(f"/items/{item_id}/photos", headers=student)
     assert response.status_code == 200
     assert [p["caption"] for p in response.json()] == ["One", "Two"]
 
 
-def test_new_item_has_no_photos(client, item_id):
-    assert client.get(f"/items/{item_id}").json()["photos"] == []
+def test_new_item_has_no_photos(client, student, item_id):
+    assert client.get(f"/items/{item_id}", headers=student).json()["photos"] == []
 
 
 def test_upload_without_login_returns_401(client, item_id):
@@ -147,8 +147,8 @@ def test_owner_deletes_photo(client, student, item_id, upload_dir):
     response = client.delete(f"/photos/{photo['id']}", headers=student)
     assert response.status_code == 204
     assert list(upload_dir.iterdir()) == []
-    assert client.get(photo["url"]).status_code == 404
-    assert client.get(f"/items/{item_id}").json()["photos"] == []
+    assert client.get(photo["url"], headers=student).status_code == 404
+    assert client.get(f"/items/{item_id}", headers=student).json()["photos"] == []
 
 
 def test_delete_by_other_student_returns_403(client, student, other_student, item_id):

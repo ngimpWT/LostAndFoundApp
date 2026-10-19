@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 
 class UserCredentials(BaseModel):
@@ -112,8 +112,43 @@ class ItemOut(BaseModel):
     item_type: str
     location: str
     is_resolved: bool
+    status: str
     owner_id: int
     owner_name: str
     created_at: datetime
     updated_at: datetime
     photos: list[PhotoOut]
+
+
+class ReviewIn(BaseModel):
+    """An admin's decision on a pending post (FR-4)."""
+
+    decision: Literal["approve", "reject"]
+    comments: str = ""
+
+    @field_validator("comments")
+    @classmethod
+    def comments_trimmed(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) > 1000:
+            raise ValueError("comments must be at most 1000 characters")
+        return value
+
+    @model_validator(mode="after")
+    def reject_needs_comments(self):
+        # The student needs to know why their post was rejected.
+        if self.decision == "reject" and not self.comments:
+            raise ValueError("comments are required when rejecting a post")
+        return self
+
+
+class ReviewOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    item_id: int
+    admin_id: int
+    admin_name: str
+    decision: str
+    comments: str
+    reviewed_at: datetime

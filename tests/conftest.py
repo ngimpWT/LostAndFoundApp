@@ -39,6 +39,14 @@ def make_user(client, name, email, phone="806-555-0101", role="student"):
     return {"X-User-Id": str(response.json()["id"])}
 
 
+def approve(client, admin_headers, item_id):
+    """Have an admin approve a post so it shows up in the public feed."""
+    response = client.post(
+        f"/items/{item_id}/reviews", json={"decision": "approve"}, headers=admin_headers
+    )
+    assert response.status_code == 201
+
+
 @pytest.fixture
 def student(client):
     return make_user(client, "Alex Buff", "alex@buffs.wtamu.edu")

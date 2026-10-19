@@ -19,3 +19,19 @@ def get_current_user(
     if user is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "You must be logged in")
     return user
+
+
+def get_optional_user(
+    x_user_id: int | None = Header(default=None),
+    db: Session = Depends(get_db),
+) -> models.User | None:
+    """Like get_current_user, but returns None for visitors who aren't logged in."""
+    if x_user_id is None:
+        return None
+    return get_current_user(x_user_id, db)
+
+
+def require_admin(user: models.User = Depends(get_current_user)) -> models.User:
+    if user.role != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can do this")
+    return user

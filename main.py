@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import Base, engine
-from routers import items, photos, users
+from routers import items, moderation, photos, users
 
 
 @asynccontextmanager
@@ -20,6 +20,7 @@ app = FastAPI(title="Campus Lost & Found", lifespan=lifespan)
 app.include_router(users.router)
 app.include_router(items.router)
 app.include_router(photos.router)
+app.include_router(moderation.router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 

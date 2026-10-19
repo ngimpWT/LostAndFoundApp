@@ -1,3 +1,5 @@
+from tests.conftest import approve
+
 ITEM = {
     "title": "Blue backpack",
     "description": "Navy JanSport with a keychain, left near the study rooms.",
@@ -63,9 +65,9 @@ def test_create_missing_field_returns_422(client, student):
 
 # ---------- Read ----------
 
-def test_list_items_newest_first(client, student):
-    create_item(client, student, title="First")
-    create_item(client, student, title="Second")
+def test_list_items_newest_first(client, student, admin):
+    for title in ["First", "Second"]:
+        approve(client, admin, create_item(client, student, title=title).json()["id"])
     response = client.get("/items")
     assert response.status_code == 200
     assert [item["title"] for item in response.json()] == ["Second", "First"]
@@ -73,7 +75,7 @@ def test_list_items_newest_first(client, student):
 
 def test_get_item_by_id(client, student):
     item_id = create_item(client, student).json()["id"]
-    response = client.get(f"/items/{item_id}")
+    response = client.get(f"/items/{item_id}", headers=student)
     assert response.status_code == 200
     assert response.json()["title"] == "Blue backpack"
 
@@ -91,7 +93,7 @@ def test_owner_updates_item(client, student):
     assert response.status_code == 200
     assert response.json()["title"] == "Navy backpack"
     assert response.json()["location"] == "Student Center"
-    assert client.get(f"/items/{item_id}").json()["title"] == "Navy backpack"
+    assert client.get(f"/items/{item_id}", headers=student).json()["title"] == "Navy backpack"
 
 
 def test_update_by_other_student_returns_403(client, student, other_student):
@@ -122,7 +124,7 @@ def test_owner_marks_item_resolved(client, student):
     response = client.put(f"/items/{item_id}/resolve", headers=student)
     assert response.status_code == 200
     assert response.json()["is_resolved"] is True
-    assert client.get(f"/items/{item_id}").json()["is_resolved"] is True
+    assert client.get(f"/items/{item_id}", headers=student).json()["is_resolved"] is True
 
 
 def test_resolve_by_other_student_returns_403(client, student, other_student):

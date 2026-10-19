@@ -33,10 +33,13 @@ function getCurrentUser() {
 // Send a request to the API. The logged-in user's id goes in the X-User-Id
 // header so the backend knows who is making the request.
 // `data` can be a plain object (sent as JSON) or a FormData (for file uploads).
-async function api(method, url, data) {
-  const headers = {};
+function authHeaders() {
   const user = getCurrentUser();
-  if (user) headers["X-User-Id"] = user.id;
+  return user ? { "X-User-Id": user.id } : {};
+}
+
+async function api(method, url, data) {
+  const headers = authHeaders();
 
   let body;
   if (data instanceof FormData) {

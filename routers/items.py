@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from auth import get_current_user
+from auth import get_current_user, get_optional_user
 from database import get_db
 
 router = APIRouter(prefix="/items", tags=["items"])
@@ -15,6 +15,20 @@ def get_item_or_404(item_id: int, db: Session) -> models.Item:
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
     return item
+
+
+def get_visible_item(item_id: int, user: models.User | None, db: Session) -> models.Item:
+    """Load an item the viewer is allowed to see.
+
+    Approved posts are public. Pending and rejected posts can only be seen by
+    their owner and by admins; everyone else gets a 404 as if it didn't exist.
+    """
+    item = get_item_or_404(item_id, db)
+    if item.status == "approved":
+        return item
+    if user is not None and (user.id == item.owner_id or user.role == "admin"):
+        return item
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
 
 
 def get_owned_item(item_id: int, user: models.User, db: Session) -> models.Item:
@@ -41,15 +55,34 @@ def create_item(
     return item
 
 
+NEWEST_FIRST = (models.Item.created_at.desc(), models.Item.id.desc())
+
+
 @router.get("", response_model=list[schemas.ItemOut])
 def list_items(db: Session = Depends(get_db)):
-    query = select(models.Item).order_by(models.Item.created_at.desc(), models.Item.id.desc())
+    """The public campus feed: only posts an admin has approved."""
+    query = select(models.Item).where(models.Item.status == "approved").order_by(*NEWEST_FIRST)
+    return db.scalars(query).all()
+
+
+# Declared before "/{item_id}" so "mine" isn't mistaken for an item id.
+@router.get("/mine", response_model=list[schemas.ItemOut])
+def list_my_items(
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """All of the current user's posts, whatever their moderation status."""
+    query = select(models.Item).where(models.Item.owner_id == user.id).order_by(*NEWEST_FIRST)
     return db.scalars(query).all()
 
 
 @router.get("/{item_id}", response_model=schemas.ItemOut)
-def get_item(item_id: int, db: Session = Depends(get_db)):
-    return get_item_or_404(item_id, db)
+def get_item(
+    item_id: int,
+    user: models.User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    return get_visible_item(item_id, user, db)
 
 
 @router.put("/{item_id}", response_model=schemas.ItemOut)
@@ -62,6 +95,7 @@ def update_item(
     item = get_owned_item(item_id, user, db)
     for field, value in item_in.model_dump().items():
         setattr(item, field, value)
+    item.status = "pending"  # changed posts must be reviewed again
     db.commit()
     db.refresh(item)
     return item

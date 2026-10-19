@@ -32,6 +32,9 @@ class Item(Base):
     item_type: Mapped[str] = mapped_column(String(10))  # "lost" or "found"
     location: Mapped[str] = mapped_column(String(100))  # campus location
     is_resolved: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Moderation status: "pending" until an admin reviews it, then "approved" or "rejected".
+    # Only approved posts appear in the public feed.
+    status: Mapped[str] = mapped_column(String(10), default="pending")
     owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
@@ -39,6 +42,9 @@ class Item(Base):
     owner: Mapped[User] = relationship(back_populates="items")
     photos: Mapped[list["Photo"]] = relationship(
         back_populates="item", order_by="Photo.id", cascade="all, delete-orphan"
+    )
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="item", order_by="Review.id", cascade="all, delete-orphan"
     )
 
     @property
@@ -61,3 +67,23 @@ class Photo(Base):
     @property
     def url(self) -> str:
         return f"/photos/{self.id}/image"
+
+
+class Review(Base):
+    """An admin's moderation decision on an item post (FR-4)."""
+
+    __tablename__ = "reviews"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"))
+    admin_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    decision: Mapped[str] = mapped_column(String(10))  # "approve" or "reject"
+    comments: Mapped[str] = mapped_column(Text, default="")
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+    item: Mapped[Item] = relationship(back_populates="reviews")
+    admin: Mapped[User] = relationship()
+
+    @property
+    def admin_name(self) -> str:
+        return self.admin.name

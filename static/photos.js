@@ -1,13 +1,14 @@
 // Photo attachments with captions (FR-3).
-// Uses api(), showMessage(), and escapeHTML() from app.js, and loadItems() from items.js.
+// Uses api(), authHeaders(), showMessage(), and escapeHTML() from app.js,
+// and loadItems() from items.js.
 
 // HTML for an item's photos, plus an upload form if the viewer owns the post.
 function photoGallery(item, isOwner) {
   const photos = item.photos.map((photo) => `
     <figure class="relative w-32">
-      <a href="${photo.url}" target="_blank">
-        <img src="${photo.url}" alt="${escapeHTML(photo.caption)}"
-             class="w-32 h-32 object-cover rounded border">
+      <a target="_blank">
+        <img data-src="${photo.url}" alt="${escapeHTML(photo.caption)}"
+             class="w-32 h-32 object-cover rounded border bg-slate-100">
       </a>
       <figcaption class="text-xs text-slate-600 mt-1">${escapeHTML(photo.caption)}</figcaption>
       ${isOwner ? `
@@ -29,6 +30,23 @@ function photoGallery(item, isOwner) {
       ${photos ? `<div class="flex flex-wrap gap-3">${photos}</div>` : ""}
       ${uploadForm}
     </div>`;
+}
+
+// Photos of posts awaiting review are only served to the owner and admins, so
+// the request needs the X-User-Id header. A plain <img src="..."> can't send
+// headers, so we fetch each image ourselves and show it from a local blob URL.
+async function loadPhotoImages(container) {
+  for (const img of container.querySelectorAll("img[data-src]")) {
+    try {
+      const response = await fetch(img.dataset.src, { headers: authHeaders() });
+      if (!response.ok) continue;
+      const blobUrl = URL.createObjectURL(await response.blob());
+      img.src = blobUrl;
+      img.parentElement.href = blobUrl; // click to open full size
+    } catch (err) {
+      console.error("Could not load photo", img.dataset.src, err);
+    }
+  }
 }
 
 async function uploadPhoto(event, itemId) {

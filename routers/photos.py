@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
-from auth import get_current_user
+from auth import get_current_user, get_optional_user
 from database import get_db
-from routers.items import get_item_or_404, get_owned_item
+from routers.items import get_owned_item, get_visible_item
 
 router = APIRouter(tags=["photos"])
 
@@ -80,19 +80,29 @@ def upload_photo(
         item_id=item.id, caption=caption, filename=filename, content_type=content_type
     )
     db.add(photo)
+    item.status = "pending"  # new photos must be reviewed before they're public
     db.commit()
     db.refresh(photo)
     return photo
 
 
 @router.get("/items/{item_id}/photos", response_model=list[schemas.PhotoOut])
-def list_photos(item_id: int, db: Session = Depends(get_db)):
-    return get_item_or_404(item_id, db).photos
+def list_photos(
+    item_id: int,
+    user: models.User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    return get_visible_item(item_id, user, db).photos
 
 
 @router.get("/photos/{photo_id}/image")
-def get_photo_image(photo_id: int, db: Session = Depends(get_db)):
+def get_photo_image(
+    photo_id: int,
+    user: models.User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
     photo = get_photo_or_404(photo_id, db)
+    get_visible_item(photo.item_id, user, db)  # photos of hidden posts stay hidden
     if not (UPLOAD_DIR / photo.filename).exists():
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Photo file is missing")
     return FileResponse(UPLOAD_DIR / photo.filename, media_type=photo.content_type)
