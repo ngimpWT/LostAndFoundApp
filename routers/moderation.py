@@ -6,7 +6,7 @@ import models
 import schemas
 from auth import get_current_user, require_admin
 from database import get_db
-from routers.items import get_item_or_404
+from routers.items import get_item_or_404, with_details
 
 router = APIRouter(tags=["moderation"])
 
@@ -25,7 +25,7 @@ def list_pending_items(
         .where(models.Item.status == "pending")
         .order_by(models.Item.created_at, models.Item.id)
     )
-    return db.scalars(query).all()
+    return db.scalars(with_details(query)).all()
 
 
 @router.post(

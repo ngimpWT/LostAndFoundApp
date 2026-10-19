@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import event
 
 from tests.conftest import approve
 
@@ -148,3 +149,32 @@ def test_locations_lists_distinct_approved_locations_sorted(client, items):
 
 def test_locations_empty_when_nothing_approved(client):
     assert client.get("/items/locations").json() == []
+
+
+# ---------- Performance ----------
+
+def test_search_query_count_does_not_grow_with_results(client, session_factory, admin, student, other_student):
+    """Owners and photos should load in bulk, not with one extra query per post."""
+    for i in range(10):
+        headers = student if i % 2 else other_student
+        body = {"title": f"Item {i}", "description": "d", "item_type": "lost", "location": "Library"}
+        item_id = client.post("/items", json=body, headers=headers).json()["id"]
+        client.post(
+            f"/items/{item_id}/photos",
+            data={"caption": "Photo"},
+            files={"file": ("p.png", PNG_BYTES, "image/png")},
+            headers=headers,
+        )
+        approve(client, admin, item_id)
+
+    statements = []
+    engine = session_factory.kw["bind"]
+    listener = lambda *args: statements.append(args[2])  # args[2] is the SQL text
+    event.listen(engine, "before_cursor_execute", listener)
+    try:
+        response = client.get("/items/search")
+    finally:
+        event.remove(engine, "before_cursor_execute", listener)
+
+    assert len(response.json()) == 10
+    assert len(statements) <= 4, statements

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 import models
 import schemas
@@ -60,11 +60,20 @@ def create_item(
 NEWEST_FIRST = (models.Item.created_at.desc(), models.Item.id.desc())
 
 
+def with_details(query):
+    """Load each listed post's owner and photos in bulk.
+
+    Without this, SQLAlchemy runs one extra query per post the first time its
+    owner or photos are used ("N+1 queries"), which gets slow as the list grows.
+    """
+    return query.options(selectinload(models.Item.owner), selectinload(models.Item.photos))
+
+
 @router.get("", response_model=list[schemas.ItemOut])
 def list_items(db: Session = Depends(get_db)):
     """The public campus feed: only posts an admin has approved."""
     query = select(models.Item).where(models.Item.status == "approved").order_by(*NEWEST_FIRST)
-    return db.scalars(query).all()
+    return db.scalars(with_details(query)).all()
 
 
 # The routes below are declared before "/{item_id}" so words like "search"
@@ -102,7 +111,7 @@ def search_items(
     if not params.include_resolved:
         query = query.where(models.Item.is_resolved.is_(False))
 
-    return db.scalars(query.order_by(*NEWEST_FIRST)).all()
+    return db.scalars(with_details(query.order_by(*NEWEST_FIRST))).all()
 
 
 @router.get("/locations", response_model=list[str])
@@ -124,7 +133,7 @@ def list_my_items(
 ):
     """All of the current user's posts, whatever their moderation status."""
     query = select(models.Item).where(models.Item.owner_id == user.id).order_by(*NEWEST_FIRST)
-    return db.scalars(query).all()
+    return db.scalars(with_details(query)).all()
 
 
 @router.get("/{item_id}", response_model=schemas.ItemOut)
