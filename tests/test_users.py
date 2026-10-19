@@ -103,25 +103,62 @@ def test_login_missing_field_returns_422(client):
     assert response.status_code == 422
 
 
-# ---------- Read ----------
+# ---------- Read (contact details are private) ----------
 
-def test_get_user_by_id(client):
+def test_me_returns_current_user(client):
     user_id = register(client).json()["id"]
-    response = client.get(f"/users/{user_id}")
+    response = client.get("/users/me", headers={"X-User-Id": str(user_id)})
     assert response.status_code == 200
     assert response.json()["email"] == STUDENT["email"]
 
 
-def test_get_unknown_user_returns_404(client):
-    assert client.get("/users/999").status_code == 404
+def test_me_without_login_returns_401(client):
+    assert client.get("/users/me").status_code == 401
 
 
-def test_list_users(client):
-    register(client)
-    register(client, name="Admin Person", email="admin@wtamu.edu", role="admin")
-    response = client.get("/users")
+def test_me_with_unknown_user_returns_401(client):
+    assert client.get("/users/me", headers={"X-User-Id": "999"}).status_code == 401
+
+
+def test_user_can_read_themselves(client):
+    user_id = register(client).json()["id"]
+    response = client.get(f"/users/{user_id}", headers={"X-User-Id": str(user_id)})
     assert response.status_code == 200
-    assert [u["email"] for u in response.json()] == [
-        "alex@buffs.wtamu.edu",
-        "admin@wtamu.edu",
-    ]
+    assert response.json()["email"] == STUDENT["email"]
+
+
+def test_get_user_without_login_returns_401(client):
+    user_id = register(client).json()["id"]
+    assert client.get(f"/users/{user_id}").status_code == 401
+
+
+def test_student_cannot_read_other_users_returns_403(client, other_student):
+    user_id = register(client).json()["id"]
+    assert client.get(f"/users/{user_id}", headers=other_student).status_code == 403
+
+
+def test_admin_can_read_any_user(client, admin):
+    user_id = register(client).json()["id"]
+    response = client.get(f"/users/{user_id}", headers=admin)
+    assert response.status_code == 200
+    assert response.json()["email"] == STUDENT["email"]
+
+
+def test_get_unknown_user_as_admin_returns_404(client, admin):
+    assert client.get("/users/999", headers=admin).status_code == 404
+
+
+def test_admin_lists_users(client, admin):
+    register(client)
+    response = client.get("/users", headers=admin)
+    assert response.status_code == 200
+    assert [u["email"] for u in response.json()] == ["admin@wtamu.edu", "alex@buffs.wtamu.edu"]
+
+
+def test_list_users_without_login_returns_401(client):
+    register(client)
+    assert client.get("/users").status_code == 401
+
+
+def test_student_cannot_list_users_returns_403(client, student):
+    assert client.get("/users", headers=student).status_code == 403
