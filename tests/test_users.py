@@ -22,10 +22,11 @@ def test_register_student_returns_201_and_user(client):
     assert data["role"] == "student"  # default role
 
 
-def test_register_admin(client):
+def test_register_ignores_role_field(client):
+    # Admins are created with make_admin.py, never through sign-up.
     response = register(client, role="admin")
     assert response.status_code == 201
-    assert response.json()["role"] == "admin"
+    assert response.json()["role"] == "student"
 
 
 def test_register_normalizes_email_to_lowercase(client):
@@ -56,10 +57,6 @@ def test_register_blank_name_returns_422(client):
 def test_register_invalid_phone_returns_422(client):
     assert register(client, phone="call me").status_code == 422
     assert register(client, phone="123").status_code == 422
-
-
-def test_register_invalid_role_returns_422(client):
-    assert register(client, role="superuser").status_code == 422
 
 
 # ---------- Login ----------

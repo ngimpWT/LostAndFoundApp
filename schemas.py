@@ -41,7 +41,7 @@ class UserCredentials(BaseModel):
 
 
 class UserCreate(UserCredentials):
-    role: Literal["student", "admin"] = "student"
+    """Everyone signs up as a student. Admins are promoted with make_admin.py."""
 
 
 class UserLogin(UserCredentials):

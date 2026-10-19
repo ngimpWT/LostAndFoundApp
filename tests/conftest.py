@@ -6,21 +6,28 @@ from sqlalchemy.pool import StaticPool
 
 from database import Base, get_db
 from main import app
+from make_admin import promote_to_admin
 
 
 @pytest.fixture
-def client():
-    """A TestClient backed by a fresh in-memory database for each test."""
+def session_factory():
+    """A fresh in-memory database for each test. Call it to open a session."""
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False)
     Base.metadata.create_all(bind=engine)
+    yield sessionmaker(bind=engine, autoflush=False)
+    Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def client(session_factory):
+    """A TestClient whose requests use the test database."""
 
     def override_get_db():
-        db = TestingSessionLocal()
+        db = session_factory()
         try:
             yield db
         finally:
@@ -29,12 +36,11 @@ def client():
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
     app.dependency_overrides.clear()
-    Base.metadata.drop_all(bind=engine)
 
 
-def make_user(client, name, email, phone="806-555-0101", role="student"):
+def make_user(client, name, email, phone="806-555-0101"):
     """Register a user and return the headers that identify them to the API."""
-    response = client.post("/users", json={"name": name, "email": email, "phone": phone, "role": role})
+    response = client.post("/users", json={"name": name, "email": email, "phone": phone})
     assert response.status_code == 201
     return {"X-User-Id": str(response.json()["id"])}
 
@@ -58,5 +64,8 @@ def other_student(client):
 
 
 @pytest.fixture
-def admin(client):
-    return make_user(client, "Admin Person", "admin@wtamu.edu", role="admin")
+def admin(client, session_factory):
+    headers = make_user(client, "Admin Person", "admin@wtamu.edu")
+    with session_factory() as db:
+        promote_to_admin(db, "admin@wtamu.edu")
+    return headers
