@@ -1,3 +1,4 @@
+import os
 import uuid
 from pathlib import Path
 
@@ -13,7 +14,8 @@ from routers.items import get_owned_item, get_visible_item
 
 router = APIRouter(tags=["photos"])
 
-UPLOAD_DIR = Path("uploads")
+# Set the UPLOAD_DIR environment variable to save photos somewhere else (the browser tests do).
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "uploads"))
 MAX_PHOTO_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
