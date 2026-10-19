@@ -7,13 +7,35 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800">
-  <header class="bg-indigo-700 text-white">
-    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-bold">Campus Lost &amp; Found</h1>
-      <div id="nav-user" class="hidden text-sm flex items-center gap-3">
-        <span id="nav-user-name"></span>
-        <button id="logout-btn" class="bg-white/20 hover:bg-white/30 rounded px-3 py-1">Log out</button>
+  <!-- "sticky" keeps the header (and its search bar) visible while scrolling -->
+  <header class="bg-indigo-700 text-white sticky top-0 z-10 shadow">
+    <div class="max-w-3xl mx-auto px-4 py-3 space-y-3">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">Campus Lost &amp; Found</h1>
+        <div id="nav-user" class="hidden text-sm flex items-center gap-3">
+          <span id="nav-user-name"></span>
+          <button id="logout-btn" class="bg-white/20 hover:bg-white/30 rounded px-3 py-1">Log out</button>
+        </div>
       </div>
+
+      <!-- Search the campus feed (shown once logged in) -->
+      <form id="search-form" role="search" class="hidden flex flex-wrap items-center gap-2 text-sm">
+        <input name="q" type="search" maxlength="100" autocomplete="off"
+               placeholder="🔍 Search lost & found, e.g. blue backpack"
+               class="flex-1 min-w-full sm:min-w-64 rounded px-3 py-2 text-base text-slate-800 bg-white placeholder:text-slate-400">
+        <select name="item_type" class="rounded px-2 py-2 bg-indigo-600 border border-indigo-400 text-white">
+          <option value="">Lost &amp; found</option>
+          <option value="lost">Lost only</option>
+          <option value="found">Found only</option>
+        </select>
+        <select name="location" class="rounded px-2 py-2 bg-indigo-600 border border-indigo-400 text-white max-w-48">
+          <option value="">All locations</option>
+        </select>
+        <label class="flex items-center gap-1 text-indigo-100">
+          <input type="checkbox" name="include_resolved"> Show resolved
+        </label>
+        <button type="button" id="clear-search-btn" class="text-indigo-100 hover:text-white hover:underline">Clear</button>
+      </form>
     </div>
   </header>
 
@@ -133,31 +155,12 @@
     </section>
 
     <!-- Public feed: approved posts only, with search and filters -->
-    <section id="items-section" class="hidden">
+    <!-- scroll-mt leaves room for the sticky header when we scroll here -->
+    <section id="items-section" class="hidden scroll-mt-40">
       <div class="flex items-baseline justify-between mb-3">
         <h2 class="text-lg font-semibold">Campus feed</h2>
         <span id="result-count" class="text-sm text-slate-500"></span>
       </div>
-
-      <form id="search-form" role="search" class="bg-white rounded-lg shadow p-4 mb-4 space-y-3">
-        <input name="q" type="search" maxlength="100" autocomplete="off"
-               placeholder="Search keywords, e.g. blue backpack"
-               class="w-full rounded border-slate-300 border px-3 py-2">
-        <div class="flex flex-wrap items-center gap-3 text-sm">
-          <select name="item_type" class="rounded border-slate-300 border px-2 py-1 bg-white">
-            <option value="">Lost &amp; found</option>
-            <option value="lost">Lost only</option>
-            <option value="found">Found only</option>
-          </select>
-          <select name="location" class="rounded border-slate-300 border px-2 py-1 bg-white">
-            <option value="">All locations</option>
-          </select>
-          <label class="flex items-center gap-1">
-            <input type="checkbox" name="include_resolved"> Show resolved
-          </label>
-          <button type="button" id="clear-search-btn" class="ml-auto text-indigo-700 hover:underline">Clear</button>
-        </div>
-      </form>
 
       <div id="items-list" class="space-y-3"></div>
     </section>

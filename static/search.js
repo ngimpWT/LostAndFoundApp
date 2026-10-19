@@ -52,25 +52,33 @@ async function loadLocations() {
   }
 }
 
+// The search bar lives in the header, but the results are in the feed further
+// down the page, so bring the feed into view whenever the user searches.
+function searchNow() {
+  loadFeed();
+  document.getElementById("items-section").scrollIntoView({ behavior: "smooth" });
+}
+
 // Wait until the user pauses typing for a moment before searching.
 let typingTimer;
 searchForm.elements.q.addEventListener("input", () => {
   clearTimeout(typingTimer);
-  typingTimer = setTimeout(loadFeed, 250);
+  typingTimer = setTimeout(searchNow, 250);
 });
 
 // Dropdowns and the checkbox search right away.
 searchForm.addEventListener("change", (event) => {
-  if (event.target.name !== "q") loadFeed();
+  if (event.target.name !== "q") searchNow();
 });
 
 // Pressing Enter in the keyword box shouldn't reload the page.
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  loadFeed();
+  clearTimeout(typingTimer);
+  searchNow();
 });
 
 document.getElementById("clear-search-btn").addEventListener("click", () => {
   searchForm.reset();
-  loadFeed();
+  searchNow();
 });

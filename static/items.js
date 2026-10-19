@@ -15,8 +15,13 @@ function renderItemsSection(user) {
   document.getElementById("my-items-section").classList.toggle("hidden", !isStudent);
   document.getElementById("review-section").classList.toggle("hidden", !isAdmin);
   document.getElementById("items-section").classList.toggle("hidden", !user);
-  if (user) loadItems();
-  else resetItemForm();
+  document.getElementById("search-form").classList.toggle("hidden", !user);
+  if (user) {
+    loadItems();
+  } else {
+    resetItemForm();
+    document.getElementById("search-form").reset();
+  }
 }
 
 // Reload every list the current user can see.
