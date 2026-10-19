@@ -93,6 +93,16 @@ class ItemIn(BaseModel):
         return clean_text(value, "location", 100)
 
 
+class PhotoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    item_id: int
+    caption: str
+    url: str
+    created_at: datetime
+
+
 class ItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -106,3 +116,4 @@ class ItemOut(BaseModel):
     owner_name: str
     created_at: datetime
     updated_at: datetime
+    photos: list[PhotoOut]

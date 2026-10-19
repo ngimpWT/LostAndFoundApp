@@ -32,17 +32,24 @@ function getCurrentUser() {
 
 // Send a request to the API. The logged-in user's id goes in the X-User-Id
 // header so the backend knows who is making the request.
+// `data` can be a plain object (sent as JSON) or a FormData (for file uploads).
 async function api(method, url, data) {
-  const headers = { "Content-Type": "application/json" };
+  const headers = {};
   const user = getCurrentUser();
   if (user) headers["X-User-Id"] = user.id;
 
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: data === undefined ? undefined : JSON.stringify(data),
-  });
-  const body = await response.json();
+  let body;
+  if (data instanceof FormData) {
+    body = data; // the browser sets the multipart Content-Type itself
+  } else if (data !== undefined) {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(data);
+  }
+
+  const response = await fetch(url, { method, headers, body });
+  if (response.status === 204) return null; // e.g. after a DELETE
+
+  body = await response.json();
   if (!response.ok) throw new Error(errorText(body));
   return body;
 }

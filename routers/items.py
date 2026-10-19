@@ -10,11 +10,16 @@ from database import get_db
 router = APIRouter(prefix="/items", tags=["items"])
 
 
-def get_owned_item(item_id: int, user: models.User, db: Session) -> models.Item:
-    """Load an item, making sure it exists and belongs to the current user."""
+def get_item_or_404(item_id: int, db: Session) -> models.Item:
     item = db.get(models.Item, item_id)
     if item is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
+    return item
+
+
+def get_owned_item(item_id: int, user: models.User, db: Session) -> models.Item:
+    """Load an item, making sure it exists and belongs to the current user."""
+    item = get_item_or_404(item_id, db)
     if item.owner_id != user.id:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "You can only change your own posts")
     return item
@@ -44,10 +49,7 @@ def list_items(db: Session = Depends(get_db)):
 
 @router.get("/{item_id}", response_model=schemas.ItemOut)
 def get_item(item_id: int, db: Session = Depends(get_db)):
-    item = db.get(models.Item, item_id)
-    if item is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
-    return item
+    return get_item_or_404(item_id, db)
 
 
 @router.put("/{item_id}", response_model=schemas.ItemOut)

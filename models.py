@@ -37,7 +37,27 @@ class Item(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     owner: Mapped[User] = relationship(back_populates="items")
+    photos: Mapped[list["Photo"]] = relationship(
+        back_populates="item", order_by="Photo.id", cascade="all, delete-orphan"
+    )
 
     @property
     def owner_name(self) -> str:
         return self.owner.name
+
+
+class Photo(Base):
+    __tablename__ = "photos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("items.id"))
+    caption: Mapped[str] = mapped_column(String(200))
+    filename: Mapped[str] = mapped_column(String(100))  # name of the file saved in uploads/
+    content_type: Mapped[str] = mapped_column(String(50))  # e.g. "image/png"
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+
+    item: Mapped[Item] = relationship(back_populates="photos")
+
+    @property
+    def url(self) -> str:
+        return f"/photos/{self.id}/image"

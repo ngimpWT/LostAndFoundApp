@@ -7,6 +7,9 @@ __pycache__/
 # Local SQLite database
 lost_and_found.db
 
+# Uploaded photos
+uploads/
+
 # OS / editor
 .DS_Store
 .vscode/

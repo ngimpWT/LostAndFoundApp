@@ -1,5 +1,6 @@
 // Item posts: report, edit, and mark resolved (FR-2).
-// Uses api(), getCurrentUser(), showMessage(), and escapeHTML() from app.js.
+// Uses api(), getCurrentUser(), showMessage(), and escapeHTML() from app.js,
+// and photoGallery() from photos.js.
 
 const itemForm = document.getElementById("item-form");
 const itemsList = document.getElementById("items-list");
@@ -41,8 +42,9 @@ function itemCard(item, user) {
     : "";
 
   // Only the owner sees the Edit / Mark resolved buttons.
+  const isOwner = user && item.owner_id === user.id;
   let actions = "";
-  if (user && item.owner_id === user.id) {
+  if (isOwner) {
     actions = `
       <div class="flex gap-2 mt-3">
         <button onclick="startEdit(${item.id})" class="text-sm bg-slate-200 hover:bg-slate-300 rounded px-3 py-1">Edit</button>
@@ -61,6 +63,7 @@ function itemCard(item, user) {
         📍 ${escapeHTML(item.location)} · Posted by ${escapeHTML(item.owner_name)}
         on ${new Date(item.created_at + "Z").toLocaleDateString()}
       </p>
+      ${photoGallery(item, isOwner)}
       ${actions}
     </article>`;
 }
