@@ -7,27 +7,45 @@ const messageBox = document.getElementById("message");
 
 // ---------- Helpers ----------
 
+// Messages appear as a "toast" pinned to the bottom of the screen, so they're
+// visible no matter how far down the page you've scrolled. Click to dismiss.
+let messageTimer;
+
 function showMessage(text, isError = false) {
   messageBox.textContent = text;
-  messageBox.className = `mb-4 rounded px-4 py-3 text-sm ${
-    isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
+  messageBox.className = `fixed bottom-4 left-1/2 -translate-x-1/2 z-20 w-[calc(100%-2rem)] max-w-xl
+    rounded-lg shadow-lg px-4 py-3 text-sm cursor-pointer ${
+    isError ? "bg-red-600 text-white" : "bg-green-600 text-white"
   }`;
+  clearTimeout(messageTimer);
+  messageTimer = setTimeout(hideMessage, isError ? 8000 : 4000);
 }
 
 function hideMessage() {
   messageBox.className = "hidden";
 }
 
+messageBox.addEventListener("click", hideMessage);
+
 // Turn a FastAPI error response into a readable sentence.
 function errorText(body) {
   if (Array.isArray(body.detail)) {
-    return body.detail.map((err) => `${err.loc.at(-1)}: ${err.msg}`).join("; ");
+    return body.detail.map((err) => {
+      const message = err.msg.replace(/^Value error, /, "");
+      const field = err.loc.at(-1);
+      // Errors about the request as a whole (not one field) have the location "body".
+      return field === "body" ? message : `${field}: ${message}`;
+    }).join("; ");
   }
   return body.detail || "Something went wrong";
 }
 
 function getCurrentUser() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY));
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return null; // storage held something that isn't valid JSON
+  }
 }
 
 // Send a request to the API. The logged-in user's id goes in the X-User-Id
@@ -39,6 +57,7 @@ function authHeaders() {
 }
 
 async function api(method, url, data) {
+  const user = getCurrentUser();
   const headers = authHeaders();
 
   let body;
@@ -51,6 +70,13 @@ async function api(method, url, data) {
 
   const response = await fetch(url, { method, headers, body });
   if (response.status === 204) return null; // e.g. after a DELETE
+
+  // The saved login is no longer valid (e.g. the database was reset): log out.
+  if (response.status === 401 && user && url !== "/users/login") {
+    localStorage.removeItem(STORAGE_KEY);
+    render();
+    throw new Error("Your session has expired. Please log in again.");
+  }
 
   // A server crash returns plain text ("Internal Server Error"), not JSON.
   const isJSON = response.headers.get("Content-Type")?.includes("application/json");
@@ -92,6 +118,28 @@ function escapeHTML(text) {
 }
 
 // ---------- Session display ----------
+
+// When the page loads, check the saved login with the server. It may belong to
+// a user who no longer exists (database reset), or to a different person who
+// now has that id. On success, save the fresh copy so role changes (like being
+// promoted with make_admin.py) take effect.
+async function verifySession() {
+  const saved = getCurrentUser();
+  if (!saved) return;
+  try {
+    const user = await api("GET", "/users/me");
+    if (user.email !== saved.email) throw new Error("Saved login belongs to someone else");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  } catch (err) {
+    if (err instanceof TypeError) {
+      // fetch() itself failed: the server isn't reachable, so keep the login for now.
+      showMessage("Can't reach the server. Is it running?", true);
+      return;
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    showMessage("Your session has expired. Please log in again.", true);
+  }
+}
 
 function render() {
   const user = getCurrentUser();
@@ -148,4 +196,4 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 });
 
 showTab("login");
-// The first render() runs at the bottom of items.js, once its functions exist.
+// The first render() runs at the bottom of items.js, once every script has loaded.

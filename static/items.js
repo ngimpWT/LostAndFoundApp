@@ -142,7 +142,7 @@ async function startEdit(itemId) {
     document.getElementById("item-form-title").textContent = "Edit item";
     document.getElementById("item-submit-btn").textContent = "Save changes";
     document.getElementById("item-cancel-btn").classList.remove("hidden");
-    itemForm.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("item-form-section").scrollIntoView({ behavior: "smooth" });
   } catch (err) {
     showMessage(err.message, true);
   }
@@ -181,4 +181,5 @@ async function resolveItem(itemId) {
   }
 }
 
-render();
+// Check any saved login with the server, then draw the page.
+verifySession().then(render);

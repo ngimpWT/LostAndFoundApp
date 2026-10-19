@@ -40,8 +40,8 @@
   </header>
 
   <main class="max-w-3xl mx-auto px-4 py-10">
-    <!-- Message banner for success / error feedback -->
-    <div id="message" class="hidden"></div>
+    <!-- Success / error messages (shown as a toast by showMessage in app.js) -->
+    <div id="message" role="status" class="hidden"></div>
 
     <!-- Shown when nobody is logged in -->
     <section id="auth-section" class="max-w-md mx-auto bg-white rounded-lg shadow">
@@ -95,7 +95,8 @@
     </section>
 
     <!-- Report / edit an item (students only) -->
-    <section id="item-form-section" class="hidden bg-white rounded-lg shadow p-6 mb-6">
+    <!-- scroll-mt leaves room for the sticky header when Edit scrolls here -->
+    <section id="item-form-section" class="hidden bg-white rounded-lg shadow p-6 mb-6 scroll-mt-40">
       <h2 id="item-form-title" class="text-lg font-semibold mb-4">Report an item</h2>
       <form id="item-form" class="space-y-4">
         <input type="hidden" name="id">
