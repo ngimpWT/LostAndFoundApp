@@ -4,10 +4,15 @@
 
 // HTML for an item's photos, plus an upload form if the viewer owns the post.
 function photoGallery(item, isOwner) {
+  // Photos of approved posts are public, so a normal <img src> works and the
+  // browser can cache them. Other photos need the login header; for those we
+  // leave the address in data-src and loadPhotoImages() fetches them.
+  const isPublic = item.status === "approved";
   const photos = item.photos.map((photo) => `
     <figure class="relative w-32">
-      <a target="_blank">
-        <img data-src="${photo.url}" alt="${escapeHTML(photo.caption)}"
+      <a target="_blank" ${isPublic ? `href="${photo.url}"` : ""}>
+        <img ${isPublic ? `src="${photo.url}" loading="lazy"` : `data-src="${photo.url}"`}
+             alt="${escapeHTML(photo.caption)}"
              class="w-32 h-32 object-cover rounded border bg-slate-100">
       </a>
       <figcaption class="text-xs text-slate-600 mt-1">${escapeHTML(photo.caption)}</figcaption>
@@ -35,18 +40,29 @@ function photoGallery(item, isOwner) {
 // Photos of posts awaiting review are only served to the owner and admins, so
 // the request needs the X-User-Id header. A plain <img src="..."> can't send
 // headers, so we fetch each image ourselves and show it from a local blob URL.
+// Blob URLs hold the image in memory until revoked, so we free the ones from
+// a list's previous render each time it's redrawn.
+const blobUrlsByContainer = new Map();
+
 async function loadPhotoImages(container) {
-  for (const img of container.querySelectorAll("img[data-src]")) {
+  for (const url of blobUrlsByContainer.get(container) ?? []) URL.revokeObjectURL(url);
+  const blobUrls = [];
+  blobUrlsByContainer.set(container, blobUrls);
+
+  const images = [...container.querySelectorAll("img[data-src]")];
+  // Fetch all the images at the same time instead of one after another.
+  await Promise.all(images.map(async (img) => {
     try {
       const response = await fetch(img.dataset.src, { headers: authHeaders() });
-      if (!response.ok) continue;
+      if (!response.ok) return;
       const blobUrl = URL.createObjectURL(await response.blob());
+      blobUrls.push(blobUrl);
       img.src = blobUrl;
       img.parentElement.href = blobUrl; // click to open full size
     } catch (err) {
       console.error("Could not load photo", img.dataset.src, err);
     }
-  }
+  }));
 }
 
 async function uploadPhoto(event, itemId) {
