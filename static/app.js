@@ -52,6 +52,12 @@ async function api(method, url, data) {
   const response = await fetch(url, { method, headers, body });
   if (response.status === 204) return null; // e.g. after a DELETE
 
+  // A server crash returns plain text ("Internal Server Error"), not JSON.
+  const isJSON = response.headers.get("Content-Type")?.includes("application/json");
+  if (!isJSON) {
+    throw new Error(`Server error (${response.status}). Check the terminal running the server.`);
+  }
+
   body = await response.json();
   if (!response.ok) throw new Error(errorText(body));
   return body;
